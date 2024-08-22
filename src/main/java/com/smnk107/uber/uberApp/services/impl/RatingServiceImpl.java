@@ -45,7 +45,9 @@ public class RatingServiceImpl implements RatingService {
                 .orElse(0.0);
 
         rider.setRating(newRating);
-        riderRepository.save(rider);
+        Rider savedRider = riderRepository.save(rider);
+
+        return modelMapper.map(savedRider,RiderDTO.class);
 
     }
 
