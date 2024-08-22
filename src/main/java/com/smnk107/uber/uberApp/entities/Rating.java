@@ -10,6 +10,8 @@ import lombok.Data;
                   @Index(name = "idx_rider_rating",columnList = "rider_id")  })
 @Builder
 public class Rating {
+
+    @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
