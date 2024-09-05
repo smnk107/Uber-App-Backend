@@ -7,12 +7,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 
 @RestController()
 @RequestMapping("/rider")
 @RequiredArgsConstructor
 @Slf4j
+@Secured("ROLE_RIDER")
 public class RiderController {
 
     private final RiderService riderService;
@@ -20,6 +22,7 @@ public class RiderController {
     @PostMapping("/requestRide")
     public RideRequestDTO requestRide(@RequestBody RideRequestDTO rideRequestDTO)
     {
+        System.out.println(rideRequestDTO.getRider()+"-in controller"+rideRequestDTO.getId());
         return riderService.requestRide(rideRequestDTO);
     }
 
@@ -42,5 +45,12 @@ public class RiderController {
         PageRequest pageRequest = PageRequest.of(pageOffset,pageSize, Sort.by(Sort.Direction.DESC,"requestedTime","id"));
         return riderService.getAllMyRides(pageRequest);
     }
+
+    @PostMapping("/rateDriver/{rideId}/{rating}")
+    public DriverDTO rateDriver(@PathVariable Long rideId, @PathVariable Integer rating)
+    {
+        return riderService.rateDriver(rideId,rating);
+    }
+
 
 }

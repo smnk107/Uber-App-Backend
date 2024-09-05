@@ -11,6 +11,7 @@ import com.smnk107.uber.uberApp.exceptions.ResourceNotFoundException;
 import com.smnk107.uber.uberApp.repository.RideRequestRepository;
 import com.smnk107.uber.uberApp.repository.RiderRepository;
 import com.smnk107.uber.uberApp.services.DriverService;
+import com.smnk107.uber.uberApp.services.RatingService;
 import com.smnk107.uber.uberApp.services.RideService;
 import com.smnk107.uber.uberApp.services.RiderService;
 import com.smnk107.uber.uberApp.strategies.DriverMatchingStrategy;
@@ -22,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -38,8 +40,12 @@ public class RiderServiceImpl implements RiderService
     private  final RiderRepository riderRepository;
     private  final RideService rideService;
     private  final DriverService driverService;
+    private final RatingService ratingService;
     @Override
     public RideRequestDTO requestRide(RideRequestDTO rideRequestDTO) {
+
+
+        System.out.println(rideRequestDTO.getRider()+"-in service"+rideRequestDTO.getId());
 
         RideRequest rideRequest = modelMapper.map(rideRequestDTO,RideRequest.class);
         rideRequest.setRideRequestStatus(RideRequestStatus.PENDING);
@@ -83,7 +89,21 @@ public class RiderServiceImpl implements RiderService
     public DriverDTO rateDriver(Long rideId, Integer rating)
     {
 
-        return null;
+        Ride ride = rideService.getRideById(rideId);
+        Rider rider = getCurrentRider();
+
+        if(!rider.equals(ride.getRider()))
+        {
+            throw new RuntimeException("Rider is not authorised to rate the rider ");
+        }
+
+        if(!ride.getRideStatus().equals(RideStatus.ENDED))
+        {
+            throw new RuntimeException("You can rate the rider after the ends!");
+        }
+
+        DriverDTO driverDTO = ratingService.rateDriver(ride,rating);
+        return driverDTO;
     }
 
     @Override
@@ -115,7 +135,12 @@ public class RiderServiceImpl implements RiderService
     public Rider getCurrentRider() {
         //TODO: fetch current user with spring security;
 
-        return riderRepository.findById(1L).orElseThrow(()-> new ResourceNotFoundException("Rider not found"));
+        User user = (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        return riderRepository.findByUser(user)
+                .orElseThrow(()->new ResourceNotFoundException("Rider not found for te User"));
+
+        //return riderRepository.findById(1L).orElseThrow(()-> new ResourceNotFoundException("Rider not found"));
     }
 
 }
